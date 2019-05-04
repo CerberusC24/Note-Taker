@@ -1,18 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
-<link rel="stylesheet" href="style.css">
-<title>Title</title>
-</head>
-<body>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+  <link rel="stylesheet" href="../style/style.css">
+  <title>KeepNotes</title>
+</head>
+
+<body>
+  <div class="container">
+    <div class="jumbotron">
+      <h1>KeepNotes</h1>
+      <a href="/" class="btn btn-lg btn-info">Home</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+
+      <!-- left column -->
+      <div class="col-12 col-md-3 fa-border sticky-top">
+        <form>
+            <div class="form-group">
+                <label for="note-ID-label">Note ID#</label>
+                <textarea placeholder="Leave Blank Unless Editing Note" class="form-control" id="note-id" rows="1"></textarea>
+            </div>
+          <div class="form-group">
+              <label for="note-title-label">Note Title</label>
+              <textarea class="form-control" id="note-title" rows="1"></textarea>
+          </div>
+          <div class="form-group">
+              <label for="note-body-label">Note Content</label>
+              <textarea class="form-control" id="note-content" rows="8"></textarea>
+          </div>
+          <button type="submit" id="noteUpdate" class="mb-3 btn btn-primary btn-warning btn-block">Edit a Note</button>
+          <button type="submit" id="noteSubmit" class="mb-3 btn btn-primary btn-success btn-block">Add a Note</button>
+        </form>
+      </div>
+      <!-- end left column -->
+
+      <!-- right column -->
+      <div class="col-12 col-md-9">
+        <div class="card">
+          <h4 class="card-header">NoteBook</h4>
+          <div class="container">
+            <div class="row justify-content-left align-items-stretch flex-start" id="notebook">
+            <!-- notes in the database list will be printed here -->
+              </div>
+          </div>
+        </div>
+      </div>
+      <!-- end right column -->
+
+    </div>
+  </div>
+
+
+
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+  <script>
+    function getNotes() {
+      $.ajax({
+        url: "/api/notes",
+        method: "GET"
+      }).then(function (noteData) {
+
+        for (let i = 0; i < noteData.length; i++) {
+
+          const $cardTitle = $("<h5>")
+            .addClass("card-title")
+            .html(`#${noteData[i].id}. ${noteData[i].title}<hr>`);
+          const $cardText = $("<p>")
+            .addClass("card-text")
+            .text(noteData[i].body);
+          const $deleteBtn = $("<button>")
+          .addClass("btn btn-sm btn-danger")
+          .attr("database-id", `${noteData[i].id}`)
+          .attr("id", "deleteBtn")
+          .text("Delete Note")
+          const btnDiv = $("<div>")
+            .append($deleteBtn)
+            .addClass("text-center")
+          const $cardBody = $("<div>")
+            .addClass("card-body")
+            .append($cardTitle, $cardText, btnDiv);
+          const $card = $("<div>")
+            .addClass("card w-100 shadow bg-black-50 rounded ")
+            .attr("style", "width: 18rem;").append($cardBody);
+          const $column = $("<div>")
+            .addClass("col-12 col-md-4 mb-2 mt-2 align-items-stretch")
+            .append($card);
+          $("#notebook").append($column);
+        }
+
+        $(document).on("click", "#deleteBtn", function(event) {
+          event.preventDefault()
+
+          const deleteID = $(this).attr("database-id")
+          
+          $.ajax({
+            url: `/api/notes/${deleteID}`,
+            method: "DELETE",
+          }).then(function(noteData) {
+            console.log(noteData)
+            location.reload()
+          })
+        })
+      })
+    }
+    getNotes();      
+
+    $("#noteSubmit").on("click", function(event) {
+      event.preventDefault();
+
+      var noteInput = 
+        {
+          title: $("#note-title").val().trim(),
+          body: $("#note-content").val().trim()
+        };
+      
+      $.ajax({
+        url: "/api/notes",
+        method: "POST",
+        data: noteInput
+        }).then(function(noteData) {
+          location.reload();
+      });      
+    });
+
+    $("#noteUpdate").on("click", function(event) {
+      event.preventDefault();
+
+      var noteID = $("#note-id").val().trim();
+
+      var updateInput = 
+      {
+        title: $("#note-title").val().trim(),
+        body: $("#note-content").val().trim()
+      }
+
+      $.ajax({
+        url: `/api/notes/${noteID}`,
+        method: "PUT",
+        data: updateInput
+      }).then(function(noteData) {
+        console.log(noteData);
+        location.reload();
+      });
+
+    })
+
+  </script>
+
+
 </body>
+
 </html>

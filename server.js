@@ -18,36 +18,78 @@ app.get('/', function(req, res) {
 });
 
 app.get('/notes', function(req, res) {
-  // send notes.html when user hits "/tables"
+  // send tables.html when user hits "/notes"
   res.sendFile(path.join(__dirname, './html/notes.html'));
 });
 
-// GET all notes in a JSON page
+// API ROUTES
+
+// GET all notes
 app.get('/api/notes', function(req, res) {
-  // query db for all notes data
-  connection.query('SELECT * FROM notes', function(err, notesData) {
+  // query db for all table data
+  connection.query('SELECT * FROM notes', function(err, noteData) {
     if (err) {
       return res.status(500).json(err);
     }
-    // if no error, send back array of table data
-    res.json(notesData);
+    // if no error, send back array of note data
+    res.json(noteData);
   });
 });
+
+// Get one specific note
+app.get("/api/notes/:id", function(req, res) {
+  connection.query(`SELECT * FROM notes WHERE id = ?`, [req.params.id], function(err, noteData) {
+    if (err) {
+      return res.status(500).json(err);
+    }
+    res.json(noteData);
+  })
+})
 
 // POST route that takes in req.body and creates a new note
 app.post('/api/notes', function(req, res) {
-  // insert new note using req.body as data
-  connection.query('INSERT INTO notes SET ?', req.body, function(err, insertResult) {
-    if (err) {
-      console.log(err);
-      return res.status(400).json(err);
-    }
-    // if insert was successful
-    res.json({ status: 'successful' });
-  });
-});
 
-// Keep this at the bottom after all the routes but before the .listen
+    // insert new note using req.body as data
+    connection.query('INSERT INTO notes SET ?', req.body, function(err, insertResult) {
+      if (err) {
+        console.log(err);
+        return res.status(400).json(err);
+      }
+      // if insert was successful
+      res.json({ status: 'successful' });
+    });
+  });
+
+  // PUT route that takes in req.params and updates the database
+  app.put(`/api/notes/:id`, function(req, res) {
+
+      // update the note in the database
+      connection.query(`UPDATE notes SET title = ?, body = ? WHERE id = ?`, [req.body.title, req.body.body, req.params.id], function(err, insertResult) {
+        if (err) {
+          console.log(err);
+          return res.status(400).json(err);
+        }
+        // if note update is successful
+        res.json({status: `update successful`});
+      })
+  })
+
+  // DELETE route that takes in and deletes the note
+  app.delete(`/api/notes/:id`, function(req, res) {
+
+    // delete note from database using req.body.id as data
+    connection.query(`DELETE FROM notes WHERE id = ?`, [req.params.id], function(err, insertResult) {
+      if (err) {
+        console.log(err);
+        return res.status(400).json(err);
+      }
+        // if the delete was successful
+        res.json({status: `note deleted`});
+    })
+  })
+
+
+
 app.get('*', function(req, res) {
   res.send('<h1>404 Error!</h1>');
 });
