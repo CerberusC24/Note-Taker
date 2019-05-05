@@ -25,7 +25,7 @@
       <!-- left column -->
       <div class="col-12 col-md-3 fa-border sticky-top">
         <form>
-            <div class="form-group">
+            <div hidden class="form-group">
                 <label for="note-ID-label">Note ID#</label>
                 <textarea placeholder="Leave Blank Unless Editing Note" class="form-control" id="note-id" rows="1"></textarea>
             </div>
@@ -37,8 +37,8 @@
               <label for="note-body-label">Note Content</label>
               <textarea class="form-control" id="note-content" rows="8"></textarea>
           </div>
-          <button type="submit" id="noteUpdate" class="mb-3 btn btn-primary btn-warning btn-block">Edit a Note</button>
-          <button type="submit" id="noteSubmit" class="mb-3 btn btn-primary btn-success btn-block">Add a Note</button>
+          <button type="submit" id="noteSubmit" class="mb-3 btn btn-primary btn-success">Add a Note</button>
+          <button type="submit" id="noteUpdate" class="mb-3 btn btn-primary btn-warning">Update a Note</button>
         </form>
       </div>
       <!-- end left column -->
@@ -46,7 +46,7 @@
       <!-- right column -->
       <div class="col-12 col-md-9">
         <div class="card">
-          <h4 class="card-header">NoteBook</h4>
+          <h4 class="card-header">NoteBook - Click on a Note to Revise It</h4>
           <div class="container">
             <div class="row justify-content-left align-items-stretch flex-start" id="notebook">
             <!-- notes in the database list will be printed here -->
@@ -68,6 +68,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
 
   <script>
+
     function getNotes() {
       $.ajax({
         url: "/api/notes",
@@ -78,7 +79,7 @@
 
           const $cardTitle = $("<h5>")
             .addClass("card-title")
-            .html(`#${noteData[i].id}. ${noteData[i].title}<hr>`);
+            .html(`${noteData[i].title}<hr>`);
           const $cardText = $("<p>")
             .addClass("card-text")
             .text(noteData[i].body);
@@ -95,7 +96,11 @@
             .append($cardTitle, $cardText, btnDiv);
           const $card = $("<div>")
             .addClass("card w-100 shadow bg-black-50 rounded ")
-            .attr("style", "width: 18rem;").append($cardBody);
+            .attr("style", "width: 18rem;").append($cardBody)
+            .attr("id", "card-clicker")
+            .attr("database-id", `${noteData[i].id}`)
+            .attr("database-title", `${noteData[i].title}`)
+            .attr("database-body", `${noteData[i].body}`)
           const $column = $("<div>")
             .addClass("col-12 col-md-4 mb-2 mt-2 align-items-stretch")
             .append($card);
@@ -122,6 +127,16 @@
     $("#noteSubmit").on("click", function(event) {
       event.preventDefault();
 
+      const noteTitle = $("#note-title").val().trim();
+      const noteBody = $("#note-content").val().trim();
+
+      if (!noteTitle || !noteBody) {
+        return false;
+      }
+      else {
+
+      $("#note-id").empty()
+
       var noteInput = 
         {
           title: $("#note-title").val().trim(),
@@ -134,8 +149,10 @@
         data: noteInput
         }).then(function(noteData) {
           location.reload();
-      });      
+      });
+    }    
     });
+  
 
     $("#noteUpdate").on("click", function(event) {
       event.preventDefault();
@@ -156,7 +173,18 @@
         console.log(noteData);
         location.reload();
       });
+    });
 
+    $(document).on("click", "#card-clicker", function(event) {
+      event.preventDefault();
+
+      const updateID = $(this).attr("database-id");
+      const updateTitle = $(this).attr("database-title");
+      const updateBody = $(this).attr("database-body")
+
+      $("#note-id").text(updateID);
+      $("#note-title").text(updateTitle);
+      $("#note-content").text(updateBody);
     })
 
   </script>
